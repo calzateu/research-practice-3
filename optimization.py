@@ -191,4 +191,4 @@ def tsp(nodes, distances):
 
     model.optimize()
 
-    return model, x
+    return model.ObjVal, x

@@ -1,6 +1,7 @@
 import optimization as go
 import os
 import pandas as pd
+import processing as pr
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.cluster import KMeans
@@ -67,6 +68,24 @@ if __name__ == "__main__":
     points_pulp.plot.scatter(x='lon', y='lat', c=labels, s=50, cmap='viridis')
     plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
     plt.show()
+
+    clusters = list(range(len(centers)))
+
+    for cluster in clusters:
+        print(f"Cluster {cluster}:")
+        points_cluster = points_pulp[points_pulp['cluster_label'] == cluster]
+        if 0 not in points_cluster['cluster_label']:
+            deposit = points_pulp.iloc[0]
+            points_cluster = pd.concat([pd.DataFrame(deposit).T, points_cluster])
+
+        distances = pr.build_distance_matrix(points_pulp)
+
+        nodes = list(points_cluster.index)
+        print(nodes)
+
+        cost, x = go.tsp(nodes, distances)
+        print(f"Cost for cluster {cluster}: {cost}")
+        # print(x)
 
     # variables = model.getVars()
     # points_gurobi = points.copy()
