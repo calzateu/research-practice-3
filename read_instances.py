@@ -1,7 +1,7 @@
 import pandas as pd
 
 ################################################################################
-# The instance data is stored in the data\instances folder
+# The instance data is stored in the data folder
 ################################################################################
 
 def read_instance(instance_name: str):
