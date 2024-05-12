@@ -16,7 +16,7 @@ def read_instance(instance_name: str):
     (DataFrame): Dataframe with the instance data
     '''
     
-    return pd.read_csv(f"data\instances\{instance_name}.vrp", 
+    return pd.read_csv(f"data\\{instance_name}.vrp", 
                        header=None, sep='\s+', 
                        names=[f'{i}' for i in range(8)]).iloc[:,0:5]
     
@@ -42,8 +42,10 @@ def obtain_instance_data(instance_name: str):
     n_nodes = instance.iloc[0,2]
     q_vehicles = instance.iloc[1,1]
     
-    data = {'points':points, 'demands': demands, 
-            'n_vehicles':n_vehicles, 'n_nodes': n_nodes, 
-            'q_vehicles': q_vehicles}
+    problem_info = {'n_vehicles':n_vehicles, 'n_nodes': n_nodes, 
+                    'q_vehicles': q_vehicles}
     
-    return data
+    points.columns = ['x', 'y']
+    points['Demand'] = demands
+    
+    return points, problem_info

@@ -1,11 +1,25 @@
 import optimization as go
 import os
-import pandas as pd
-import processing as pr
-import matplotlib.pyplot as plt
+
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import processing as pr
+import read_instances as ri
+
 from sklearn.cluster import KMeans
 
+
+# exit()
+if __name__ == "__main__":
+    
+    data, problem_info = ri.obtain_instance_data('p01')
+    
+    points = data[['x', 'y']]
+    
+    
+    
 
 if __name__ == "__main__":
     path = os.getcwd()
@@ -63,7 +77,7 @@ if __name__ == "__main__":
                 points_pulp.loc[i, 'cluster_label'] = j
                 print(i, j)
 
-    model = go.relocate(membership_matrix, Q_c, q, points)
+    # model = go.relocate(membership_matrix, Q_c, q, points)
 
     points_pulp.plot.scatter(x='lon', y='lat', c=labels, s=50, cmap='viridis')
     plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
