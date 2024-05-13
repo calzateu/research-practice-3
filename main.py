@@ -9,18 +9,64 @@ import processing as pr
 import read_instances as ri
 
 from sklearn.cluster import KMeans
-
+import my_fuzzy_cmeans_clustering as fcm
+import my_kmeans_clustering as km
+import my_distances as md
 
 # exit()
 if __name__ == "__main__":
+    verbose = True
+    instance_name = 'p01'
     
-    data, problem_info = ri.obtain_instance_data('p01')
+    data, problem_info = ri.obtain_instance_data(instance_name)
     
     points = data[['x', 'y']]
+    normalized_points = points.apply(pr.normalize, axis=0).to_numpy()
+    points = points.to_numpy()
     
+    if verbose:
+        plt.plot(points[:,0], points[:,1], 'o', color='b')
+        plt.title(instance_name)
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show()
+        
+    cost_functions_fcmeans = []
+    c_clusters = range(2, 11)
+    for c in c_clusters:
+        _, _, j = fcm.my_fuzzy_c_means(
+                  normalized_points, c, md.euclidean_distance)
+        cost_functions_fcmeans.append(j)
     
+    # Se eligen 5 clusters para p01
     
-
+    if verbose:        
+        plt.plot(c_clusters, cost_functions_fcmeans)
+        plt.title('Elbow FC-means')
+        plt.xlabel('c')
+        plt.ylabel('Cost Function')
+        plt.show()
+    
+    normalized_fc, labels_fc, _ = fcm.my_fuzzy_c_means(
+                            normalized_points, 5, md.euclidean_distance)
+    
+    centroids_fc = pr.denormalize(normalized_fc, points)
+    
+    if verbose:
+        fig = plt.figure(figsize=(8,8))
+        ax = fig.add_subplot(1, 1, 1)
+        scatter = ax.scatter(points[:,0], points[:,1], c = labels_fc, cmap = "viridis")
+        ax.scatter(centroids_fc[:,0], centroids_fc[:,1], color='gray', marker='*', linewidths=15, alpha=0.8)
+        for i, txt in enumerate(np.unique(labels_fc)):
+            ax.annotate(txt, (centroids_fc[:,0][i], centroids_fc[:,1][i]), fontsize=12, ha='center', va='center')
+        legend = ax.legend(*[scatter.legend_elements()[0], np.unique(labels_fc)], title="Clusters")
+        ax.add_artist(legend)
+        ax.set_title('Visualization fcmeans', fontsize=10)
+        ax.set_xlabel('X0')
+        ax.set_ylabel('X1')
+        plt.show()
+    
+exit()    
 if __name__ == "__main__":
     path = os.getcwd()
     data = pd.read_excel(path + '/data/1_n_128_dis_c_3_ln_8_seed_23032023_node_data.xlsx')
