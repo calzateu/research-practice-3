@@ -21,8 +21,11 @@ if __name__ == "__main__":
     data, problem_info = ri.obtain_instance_data(instance_name)
     
     points = data[['x', 'y']]
-    normalized_points = points.apply(pr.normalize, axis=0).to_numpy()
+    points_df = points.copy()
+    normalized_points = points.apply(pr.normalize, axis=0).to_numpy()[1:]
     points = points.to_numpy()
+    warehouse = points[0]
+    points = np.delete(points, 0, axis=0)
     
     if verbose:
         plt.plot(points[:,0], points[:,1], 'o', color='b')
@@ -38,23 +41,46 @@ if __name__ == "__main__":
                   normalized_points, c, md.euclidean_distance)
         cost_functions_fcmeans.append(j)
     
-    # Se eligen 5 clusters para p01
-    
     if verbose:        
         plt.plot(c_clusters, cost_functions_fcmeans)
         plt.title('Elbow FC-means')
         plt.xlabel('c')
         plt.ylabel('Cost Function')
         plt.show()
+        
+    # 5 clusters for p01
     
     normalized_fc, labels_fc, _ = fcm.my_fuzzy_c_means(
                             normalized_points, 5, md.euclidean_distance)
     
     centroids_fc = pr.denormalize(normalized_fc, points)
+        
+    # Build matrix to tell if the point i is in cluster j
+    membership_matrix = np.zeros((len(points), len(centroids_fc)))
+
+    for i in range(len(points)):
+        membership_matrix[i][labels_fc[i]] = 1
     
+    Q_c = np.array([problem_info['q_vehicles'] 
+                   for _ in range(problem_info['n_vehicles'])])
+    
+    q = data['Demand'].to_numpy()[1:]
+    
+    model_pulp = go.relocate_pulp(membership_matrix, Q_c, q, points_df)
+    variables = model_pulp.variablesDict()
+
+    # Copy point into points_pulp
+    labels_fc_realoc = labels_fc.copy()
+    points_pulp = points_df.copy()
+    for i in range(len(labels_fc_realoc)):
+        for j in range(len(centroids_fc)):
+            if variables['x_ic_add__(%d,_%d)' % (i, j)].value() == 1:
+                labels_fc_realoc[i] = j
+                # print(i, j)
+                
     if verbose:
-        fig = plt.figure(figsize=(8,8))
-        ax = fig.add_subplot(1, 1, 1)
+        fig = plt.figure(figsize=(16,8))
+        ax = fig.add_subplot(1, 2, 1)
         scatter = ax.scatter(points[:,0], points[:,1], c = labels_fc, cmap = "viridis")
         ax.scatter(centroids_fc[:,0], centroids_fc[:,1], color='gray', marker='*', linewidths=15, alpha=0.8)
         for i, txt in enumerate(np.unique(labels_fc)):
@@ -62,8 +88,19 @@ if __name__ == "__main__":
         legend = ax.legend(*[scatter.legend_elements()[0], np.unique(labels_fc)], title="Clusters")
         ax.add_artist(legend)
         ax.set_title('Visualization fcmeans', fontsize=10)
-        ax.set_xlabel('X0')
-        ax.set_ylabel('X1')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        
+        ax = fig.add_subplot(1, 2, 2)
+        scatter = ax.scatter(points[:,0], points[:,1], c = labels_fc_realoc, cmap = "viridis")
+        ax.scatter(centroids_fc[:,0], centroids_fc[:,1], color='gray', marker='*', linewidths=15, alpha=0.8)
+        for i, txt in enumerate(np.unique(labels_fc_realoc)):
+            ax.annotate(txt, (centroids_fc[:,0][i], centroids_fc[:,1][i]), fontsize=12, ha='center', va='center')
+        legend = ax.legend(*[scatter.legend_elements()[0], np.unique(labels_fc_realoc)], title="Clusters")
+        ax.add_artist(legend)
+        ax.set_title('Visualization fcmeans Reallocted', fontsize=10)
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
         plt.show()
     
 exit()    

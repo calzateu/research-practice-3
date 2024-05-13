@@ -4,7 +4,7 @@ import numpy as np
 import pulp
 
 
-def relocate_pulp(A, Q_c, q, points):
+def relocate_pulp(A, Q_c, q, points, x_name='x', y_name='y'):
     num_nodes = len(A)
     num_clusters = len(A[0])
 
@@ -23,24 +23,47 @@ def relocate_pulp(A, Q_c, q, points):
             )
 
     # Objective
+    
     model += pulp.lpSum(
         [
-            [
-                (
-                    np.sqrt(
-                        (points.iloc[i]['lon'] - np.sum(
-                            [points.iloc[j]['lon'] * A[j, c]
-                             for j in range(num_nodes)]
-                             )) ** 2 +
-                        (points.iloc[i]['lat'] - np.sum(
-                            [points.iloc[j]['lat'] * A[j, c]
-                             for j in range(num_nodes)]
-                            )) ** 2
-                            )
-                    ) * (x_ic_add[i, c] - x_ic_rem[i, c]) for c in range(num_clusters)
-                ] for i in range(num_nodes)
-            ]
-        )
+            pulp.lpSum(
+                [(np.sqrt(
+                    np.sum(
+                        [((points.iloc[i][x_name] - points.iloc[j][x_name])**2 
+                        + (points.iloc[j][x_name] - points.iloc[j][x_name])**2)
+                        *A[j, c] if j != i else 0
+                        for j in range(num_nodes)]
+                    )    
+                )*(x_ic_add[i, c] - x_ic_rem[i, c]))/
+                 np.sum(
+                     [
+                     A[k, c]    
+                     for k in range(num_nodes)]
+                 )            
+                for c in range(num_clusters)]
+            )
+        for i in range(num_nodes)]
+    )
+
+    # Objective
+    # model += pulp.lpSum(
+    #     [
+    #         [
+    #             (
+    #                 np.sqrt(
+    #                     (points.iloc[i][x_name] - np.sum(
+    #                         [points.iloc[j][x_name] * A[j, c]
+    #                          for j in range(num_nodes)]
+    #                          )) ** 2 +
+    #                     (points.iloc[i][y_name] - np.sum(
+    #                         [points.iloc[j][y_name] * A[j, c]
+    #                          for j in range(num_nodes)]
+    #                         )) ** 2
+    #                         )
+    #                 ) * (x_ic_add[i, c] - x_ic_rem[i, c]) for c in range(num_clusters)
+    #             ] for i in range(num_nodes)
+    #         ]
+    #     )
 
     # Constraints
     for node in range(num_nodes):
