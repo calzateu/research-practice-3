@@ -22,25 +22,25 @@ def total_distances(data, labels, centroids, metric):
     return sum
 
 # Implements the k-means clustering algorithm.
-def centroids_search(data, k, max_iterations, metric):
-    dim = data.shape[1]
+def centroids_search(data, data_df_centroids, k, max_iterations, metric, **kwargs):
+    dim = data_df_centroids.shape[1]
     proposed_centroids = pd.DataFrame(np.random.rand(k, dim), 
                                       columns=[f'X{i}' for i in range(dim)])
     
     i = 0
     while i < max_iterations:
         distances_matrix = pd.DataFrame(my_distances.\
-                            distances_matrix(data.to_numpy(), 
+                            distances_matrix(data_df_centroids.to_numpy(), 
                                             proposed_centroids.to_numpy(), 
                                             metric))
-        data['labels'] = distances_matrix.idxmin(axis=1)
+        data_df_centroids['labels'] = distances_matrix.idxmin(axis=1)
         
-        new_centroids = data.groupby('labels').mean().values
+        new_centroids = data_df_centroids.groupby('labels').mean().values
         if new_centroids.shape[0] < k:
             new_centroids = np.concatenate((new_centroids, 
                                             np.random.rand(k - new_centroids.shape[0], dim)))
         
-        data.drop('labels', axis=1, inplace=True)
+        data_df_centroids.drop('labels', axis=1, inplace=True)
         proposed_labels = distances_matrix.idxmin(axis=1)
         
         if (proposed_centroids == new_centroids).min().min():
@@ -48,10 +48,10 @@ def centroids_search(data, k, max_iterations, metric):
         else:
             proposed_centroids = pd.DataFrame(new_centroids, columns = proposed_centroids.columns)
         i += 1
-    return proposed_centroids, proposed_labels
+    return proposed_centroids, proposed_labels, None
 
 # Performs K-means clustering with a specified number of repetitions.
-def my_kmeans(data, k, max_iterations, repetition_number, metric):
+def my_kmeans(data, k, metric, max_iterations, repetition_number, **kwargs):
     centroids, labels = centroids_search(data, k, max_iterations, metric)
     
     for i in range(repetition_number):

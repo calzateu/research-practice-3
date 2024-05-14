@@ -30,7 +30,7 @@ def cost_function(distances, fuzzy_matrix, m):
     return cost_function
 
 # Condunted Fuzzy c means algorithm
-def my_fuzzy_c_means(data, c, metric, m=2, epsilon=0.01, max_ite=100, verbose = False):
+def my_fuzzy_c_means(data, c, metric, m=2, epsilon=0.01, max_ite=100, verbose = False, **kwargs):
     dim = data.shape[1]
     points_number = data.shape[0]
     

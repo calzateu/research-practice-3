@@ -15,7 +15,7 @@ import my_kmeans_clustering as km
 import my_distances as md
 
 def run_clustering(instance_name: str, clustering_method: callable, 
-                   verbose: bool = False):
+                   verbose: bool = False, **kwargs):
     
     data, problem_info = ri.obtain_instance_data(instance_name)
     
@@ -23,13 +23,16 @@ def run_clustering(instance_name: str, clustering_method: callable,
     deposit = points.iloc[[0]]
     points_df = points.iloc[1:,:].copy()
     normalized_points = points.apply(pr.normalize, axis=0).to_numpy()[1:]
+    normalized_df = points.apply(pr.normalize, axis=0).iloc[1:]
     points = points.to_numpy()
     warehouse = points[0]
     points = np.delete(points, 0, axis=0)
-        
-    normalized_fc, labels_fc, _ = fcm.my_fuzzy_c_means(
-                            normalized_points, problem_info['n_vehicles'], 
-                            md.euclidean_distance)
+    
+    normalized_fc, labels_fc, _ = clustering_method(normalized_points, 
+                                                 k = problem_info['n_vehicles'],
+                                                 c = problem_info['n_vehicles'],
+                                                 data_df_centroids = normalized_df,               
+                                                 **kwargs)
     
     centroids_fc = pr.denormalize(normalized_fc, points)
         
@@ -108,9 +111,19 @@ def run_clustering(instance_name: str, clustering_method: callable,
     
 if __name__ == "__main__":
     verbose = True
-    instance_name = 'p01'
+    instance_name = 'p02'
     
-    cost = run_clustering(instance_name, fcm.my_fuzzy_c_means, verbose)
+    algorithms_params = {
+        "metric":md.euclidean_distance, 
+        "m":2, 
+        "epsilon":0.01,
+        "max_ite":100,
+        "max_iterations":100,
+        "repetition_number":10
+    }
+    
+    cost = run_clustering(instance_name, fcm.my_fuzzy_c_means, verbose,
+                          **algorithms_params)
     print(cost)
     
     # data, problem_info = ri.obtain_instance_data(instance_name)
