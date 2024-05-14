@@ -21,7 +21,8 @@ if __name__ == "__main__":
     data, problem_info = ri.obtain_instance_data(instance_name)
     
     points = data[['x', 'y']]
-    points_df = points.copy()
+    deposit = points.iloc[[0]]
+    points_df = points.iloc[1:,:].copy()
     normalized_points = points.apply(pr.normalize, axis=0).to_numpy()[1:]
     points = points.to_numpy()
     warehouse = points[0]
@@ -102,6 +103,26 @@ if __name__ == "__main__":
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         plt.show()
+        
+    clusters = list(range(len(centroids_fc)))
+    
+    distances = pr.build_distance_matrix(pd.concat([deposit, points_df]))
+    costs = []
+    for cluster in clusters:
+        print(f"Cluster {cluster}:")
+        points_cluster = points_df[labels_fc == cluster]
+        if 0 not in points_cluster.index:
+            points_cluster = pd.concat([deposit, points_cluster])
+
+        nodes = list(points_cluster.index)
+        print(nodes)
+
+        cost, x = go.tsp(nodes, distances)
+        costs.append(cost)
+        print(f"Cost for cluster {cluster}: {cost}")
+        print("##########################################################")
+        
+    print("Total cost: ", np.sum(costs))
     
 exit()    
 if __name__ == "__main__":

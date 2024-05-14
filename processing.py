@@ -11,10 +11,10 @@ def denormalize(centroids, points):
         denorm[:,i] = list(map(lambda x: x*(max_i-min_i) + min_i, centroids[:,i]))
     return denorm
 
-def build_distance_matrix(points):
+def build_distance_matrix(points, x_name = 'x', y_name = 'y'):
     n = len(points)
     distances = np.zeros((n, n))
     for i in points.index:
         for j in points.index:
-            distances[i, j] = np.sqrt((points['lon'][i] - points['lon'][j])**2 + (points['lat'][i] - points['lat'][j])**2)
+            distances[i, j] = np.sqrt((points[x_name][i] - points[x_name][j])**2 + (points[y_name][i] - points[y_name][j])**2)
     return distances

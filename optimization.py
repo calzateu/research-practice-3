@@ -188,7 +188,7 @@ def relocate(a_matrix, q_c_vector, q, points):
     return model
 
 
-def tsp(nodes, distances):
+def tsp(nodes, distances, verbose = False):
     n = len(nodes)
     model = gp.Model('tsp')
 
@@ -212,6 +212,8 @@ def tsp(nodes, distances):
         for j in nodes:
             model.addConstr(l[i, j] <= (n-1) * x[i, j])
 
+    
+    if not verbose: model.Params.LogToConsole = 0
     model.optimize()
 
     return model.ObjVal, x
