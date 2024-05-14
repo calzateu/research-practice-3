@@ -13,7 +13,6 @@ import my_fuzzy_cmeans_clustering as fcm
 import my_kmeans_clustering as km
 import my_distances as md
 
-# exit()
 if __name__ == "__main__":
     verbose = True
     instance_name = 'p01'
@@ -27,32 +26,10 @@ if __name__ == "__main__":
     points = points.to_numpy()
     warehouse = points[0]
     points = np.delete(points, 0, axis=0)
-    
-    if verbose:
-        plt.plot(points[:,0], points[:,1], 'o', color='b')
-        plt.title(instance_name)
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.show()
         
-    cost_functions_fcmeans = []
-    c_clusters = range(2, 11)
-    for c in c_clusters:
-        _, _, j = fcm.my_fuzzy_c_means(
-                  normalized_points, c, md.euclidean_distance)
-        cost_functions_fcmeans.append(j)
-    
-    if verbose:        
-        plt.plot(c_clusters, cost_functions_fcmeans)
-        plt.title('Elbow FC-means')
-        plt.xlabel('c')
-        plt.ylabel('Cost Function')
-        plt.show()
-        
-    # 5 clusters for p01
-    
     normalized_fc, labels_fc, _ = fcm.my_fuzzy_c_means(
-                            normalized_points, 5, md.euclidean_distance)
+                            normalized_points, problem_info['n_vehicles'], 
+                            md.euclidean_distance)
     
     centroids_fc = pr.denormalize(normalized_fc, points)
         
