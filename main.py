@@ -25,11 +25,11 @@ def run_clustering(instance_name: str, clustering_method: callable,
     deposit = points.iloc[[0]]
     points_df = points.iloc[1:,:].copy()
     normalized_points = points.apply(pr.normalize, axis=0).to_numpy()[1:]
-    normalized_df = points.apply(pr.normalize, axis=0).iloc[1:]
+    normalized_df = points.apply(pr.normalize, axis=0).iloc[1:].reset_index(drop=True)
     points = points.to_numpy()
     points = np.delete(points, 0, axis=0)
     print(normalized_df)
-    exit()
+
     ti = time.time()
     normalized_fc, labels_fc, _ = clustering_method(data=normalized_points, 
                                                  k = problem_info['n_vehicles'],

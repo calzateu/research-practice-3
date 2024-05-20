@@ -22,7 +22,7 @@ def total_distances(data, labels, centroids, metric):
             .groupby('labels').sum().sum()
     return sum
 
-def centroids_search(data_df, k, max_iterations, metric):
+def centroids_search(data_df, k, max_iterations, metric, **kwargs):
     dim = data_df.shape[1]
     proposed_centroids = pd.DataFrame(np.random.rand(k, dim), columns=[f'X{i}' for i in range(dim)])
     
