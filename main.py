@@ -14,6 +14,8 @@ import my_fuzzy_cmeans_clustering as fcm
 import my_kmeans_clustering as km
 import my_distances as md
 
+import time
+
 def run_clustering(instance_name: str, clustering_method: callable, 
                    verbose: bool = False, **kwargs):
     
@@ -25,14 +27,16 @@ def run_clustering(instance_name: str, clustering_method: callable,
     normalized_points = points.apply(pr.normalize, axis=0).to_numpy()[1:]
     normalized_df = points.apply(pr.normalize, axis=0).iloc[1:]
     points = points.to_numpy()
-    warehouse = points[0]
     points = np.delete(points, 0, axis=0)
-    
-    normalized_fc, labels_fc, _ = clustering_method(normalized_points, 
+    print(normalized_df)
+    exit()
+    ti = time.time()
+    normalized_fc, labels_fc, _ = clustering_method(data=normalized_points, 
                                                  k = problem_info['n_vehicles'],
                                                  c = problem_info['n_vehicles'],
-                                                 data_df_centroids = normalized_df,               
+                                                 data_df = normalized_df,               
                                                  **kwargs)
+    print(f"Clustering time: {time.time() - ti}")
     
     centroids_fc = pr.denormalize(normalized_fc, points)
         
@@ -47,6 +51,7 @@ def run_clustering(instance_name: str, clustering_method: callable,
     
     q = data['Demand'].to_numpy()[1:]
     
+    ti = time.time()
     model_pulp = go.relocate_pulp(membership_matrix, Q_c, q, points_df)
     variables = model_pulp.variablesDict()
 
@@ -58,6 +63,7 @@ def run_clustering(instance_name: str, clustering_method: callable,
             if variables['x_ic_add__(%d,_%d)' % (i, j)].value() == 1:
                 labels_fc_realoc[i] = j
                 # print(i, j)
+    print(f"Relocation time: {time.time() - ti}")
                 
     if verbose:
         fig = plt.figure(figsize=(16,8))
@@ -66,9 +72,7 @@ def run_clustering(instance_name: str, clustering_method: callable,
         ax.scatter(centroids_fc[:,0], centroids_fc[:,1], color='gray', marker='*', linewidths=15, alpha=0.8)
         for i, txt in enumerate(np.unique(labels_fc)):
             ax.annotate(txt, (centroids_fc[:,0][i], centroids_fc[:,1][i]), fontsize=12, ha='center', va='center')
-        legend = ax.legend(*[scatter.legend_elements()[0], np.unique(labels_fc)], title="Clusters")
-        ax.add_artist(legend)
-        ax.set_title('Visualization fcmeans', fontsize=10)
+        ax.set_title('Visualization Clusters', fontsize=10)
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         
@@ -77,15 +81,14 @@ def run_clustering(instance_name: str, clustering_method: callable,
         ax.scatter(centroids_fc[:,0], centroids_fc[:,1], color='gray', marker='*', linewidths=15, alpha=0.8)
         for i, txt in enumerate(np.unique(labels_fc_realoc)):
             ax.annotate(txt, (centroids_fc[:,0][i], centroids_fc[:,1][i]), fontsize=12, ha='center', va='center')
-        legend = ax.legend(*[scatter.legend_elements()[0], np.unique(labels_fc_realoc)], title="Clusters")
-        ax.add_artist(legend)
-        ax.set_title('Visualization fcmeans Reallocted', fontsize=10)
+        ax.set_title('Visualization Clusters Reallocted', fontsize=10)
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         plt.show()
         
     clusters = list(range(len(centroids_fc)))
     
+    ti = time.time()
     distances = pr.build_distance_matrix(pd.concat([deposit, points_df]))
     costs = []
     for cluster in clusters:
@@ -104,25 +107,28 @@ def run_clustering(instance_name: str, clustering_method: callable,
             print("##########################################################")
             
     total_cost = np.sum(costs)
-        
+    print(f"TSP time: {time.time() - ti}")
     print("Total cost: ", total_cost)
     
     return total_cost
     
 if __name__ == "__main__":
     verbose = True
-    instance_name = 'p02'
+    instance_name = 'p01'
     
     algorithms_params = {
-        "metric":md.euclidean_distance, 
+        "metric": md.euclidean_distance, 
         "m":2, 
         "epsilon":0.01,
         "max_ite":100,
         "max_iterations":100,
-        "repetition_number":10
+        "repetition_number":100
     }
     
-    cost = run_clustering(instance_name, fcm.my_fuzzy_c_means, verbose,
+    fc_method = fcm.my_fuzzy_c_means
+    km_method = km.centroids_search
+    
+    cost = run_clustering(instance_name, km_method, verbose,
                           **algorithms_params)
     print(cost)
     

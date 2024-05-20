@@ -13,6 +13,7 @@ def distance_to_centroid(point, centroids, metric):
 # respective centroids based on the given labels and metric
 def total_distances(data, labels, centroids, metric):
     temp_data = data.copy()
+    temp_data.reset_index(drop=True, inplace=True)
     temp_data['labels'] = labels
     temp_data['distance_centroid'] = temp_data.apply(
                   lambda x: distance_to_centroid(x, centroids, metric), axis=1)
@@ -21,26 +22,20 @@ def total_distances(data, labels, centroids, metric):
             .groupby('labels').sum().sum()
     return sum
 
-# Implements the k-means clustering algorithm.
-def centroids_search(data, data_df_centroids, k, max_iterations, metric, **kwargs):
-    dim = data_df_centroids.shape[1]
-    proposed_centroids = pd.DataFrame(np.random.rand(k, dim), 
-                                      columns=[f'X{i}' for i in range(dim)])
+def centroids_search(data_df, k, max_iterations, metric):
+    dim = data_df.shape[1]
+    proposed_centroids = pd.DataFrame(np.random.rand(k, dim), columns=[f'X{i}' for i in range(dim)])
     
     i = 0
     while i < max_iterations:
-        distances_matrix = pd.DataFrame(my_distances.\
-                            distances_matrix(data_df_centroids.to_numpy(), 
-                                            proposed_centroids.to_numpy(), 
-                                            metric))
-        data_df_centroids['labels'] = distances_matrix.idxmin(axis=1)
+        distances_matrix = pd.DataFrame(my_distances.distances_matrix(data_df.to_numpy(), proposed_centroids.to_numpy(), metric))
+        data_df['labels'] = distances_matrix.idxmin(axis=1)
         
-        new_centroids = data_df_centroids.groupby('labels').mean().values
+        new_centroids = data_df.groupby('labels').mean().values
         if new_centroids.shape[0] < k:
-            new_centroids = np.concatenate((new_centroids, 
-                                            np.random.rand(k - new_centroids.shape[0], dim)))
+            new_centroids = np.concatenate((new_centroids, np.random.rand(k - new_centroids.shape[0], dim)))
         
-        data_df_centroids.drop('labels', axis=1, inplace=True)
+        data_df.drop('labels', axis=1, inplace=True)
         proposed_labels = distances_matrix.idxmin(axis=1)
         
         if (proposed_centroids == new_centroids).min().min():
@@ -48,17 +43,46 @@ def centroids_search(data, data_df_centroids, k, max_iterations, metric, **kwarg
         else:
             proposed_centroids = pd.DataFrame(new_centroids, columns = proposed_centroids.columns)
         i += 1
-    return proposed_centroids, proposed_labels, None
+    return proposed_centroids.to_numpy(), proposed_labels.to_numpy(), None
+
+# Implements the k-means clustering algorithm.
+# def centroids_search(data, data_df_centroids, k, max_iterations, metric, **kwargs):
+#     dim = data_df_centroids.shape[1]
+#     proposed_centroids = pd.DataFrame(np.random.rand(k, dim), 
+#                                       columns=[f'X{i}' for i in range(dim)])
+    
+#     i = 0
+#     while i < max_iterations:
+#         distances_matrix = pd.DataFrame(my_distances.\
+#                             distances_matrix(data_df_centroids.to_numpy(), 
+#                                             proposed_centroids.to_numpy(), 
+#                                             metric))
+#         data_df_centroids['labels'] = distances_matrix.idxmin(axis=1)
+        
+#         new_centroids = data_df_centroids.groupby('labels').mean().values
+#         if new_centroids.shape[0] < k:
+#             new_centroids = np.concatenate((new_centroids, 
+#                                             np.random.rand(k - new_centroids.shape[0], dim)))
+        
+#         data_df_centroids.drop('labels', axis=1, inplace=True)
+#         proposed_labels = distances_matrix.idxmin(axis=1)
+        
+#         if (proposed_centroids == new_centroids).min().min():
+#             break
+#         else:
+#             proposed_centroids = pd.DataFrame(new_centroids, columns = proposed_centroids.columns)
+#         i += 1
+#     return proposed_centroids.to_numpy(), proposed_labels.to_numpy(), None
 
 # Performs K-means clustering with a specified number of repetitions.
-def my_kmeans(data, k, metric, max_iterations, repetition_number, **kwargs):
-    centroids, labels = centroids_search(data, k, max_iterations, metric)
+def my_kmeans(data, data_df_centroids, k, metric, max_iterations, repetition_number=10, **kwargs):
+    centroids, labels = centroids_search(data, data_df_centroids, k, max_iterations, metric)
     
     for i in range(repetition_number):
-        new_centroids, new_labels = centroids_search(data, k, max_iterations, metric)
-        if (total_distances(data, labels, centroids, metric) < total_distances(data, labels, centroids, metric))['distance_centroid']:
+        new_centroids, new_labels = centroids_search(data, data_df_centroids, k, max_iterations, metric)
+        if (total_distances(data_df_centroids, new_labels, new_centroids, metric) < total_distances(data_df_centroids, labels, centroids, metric))['distance_centroid']:
             centroids, labels = new_centroids, new_labels
         else:
             continue
 
-    return centroids, labels
+    return centroids.to_numpy(), labels.to_numpy(), None

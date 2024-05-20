@@ -102,7 +102,7 @@ def relocate_pulp(A, Q_c, q, points, x_name='x', y_name='y'):
                     [x_ic_rem[node, cluster] for node in range(num_nodes)]
                     ) == 0
 
-    model.solve()
+    model.solve(pulp.PULP_CBC_CMD(msg=0))
 
     return model
 
