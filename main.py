@@ -16,6 +16,7 @@ import my_distances as md
 
 import time
 
+
 def run_clustering(instance_name: str, clustering_method: callable, 
                    verbose: bool = False, **kwargs):
     
@@ -52,17 +53,27 @@ def run_clustering(instance_name: str, clustering_method: callable,
     q = data['Demand'].to_numpy()[1:]
     
     ti = time.time()
-    model_pulp = go.relocate_pulp(membership_matrix, Q_c, q, points_df)
-    variables = model_pulp.variablesDict()
+    # model_pulp = go.relocate_pulp(membership_matrix, Q_c, q, points_df)
+    # variables = model_pulp.variablesDict()
+    #
+    # # Copy point into points_pulp
+    # labels_fc_realoc = labels_fc.copy()
+    # points_pulp = points_df.copy()
+    # for i in range(len(labels_fc_realoc)):
+    #     for j in range(len(centroids_fc)):
+    #         if variables['x_ic_add__(%d,_%d)' % (i, j)].value() == 1:
+    #             labels_fc_realoc[i] = j
+    #             # print(i, j)
 
-    # Copy point into points_pulp
+    model_gurobi, x_ic_add = go.relocate(membership_matrix, Q_c, q, points_df)
+    print(x_ic_add[(0, 0)].X)
     labels_fc_realoc = labels_fc.copy()
-    points_pulp = points_df.copy()
     for i in range(len(labels_fc_realoc)):
         for j in range(len(centroids_fc)):
-            if variables['x_ic_add__(%d,_%d)' % (i, j)].value() == 1:
+            if x_ic_add[(i, j)].X == 1:
                 labels_fc_realoc[i] = j
                 # print(i, j)
+
     print(f"Relocation time: {time.time() - ti}")
                 
     if verbose:
