@@ -10,6 +10,7 @@ import read_instances as ri
 import my_fuzzy_cmeans_clustering as fcm
 import my_kmeans_clustering as km
 import my_distances as md
+import p_median as pm
 
 import time
 
@@ -32,6 +33,7 @@ def run_clustering(instance_name: str, clustering_method: callable,
     normalized_fc, labels_fc, _ = clustering_method(data=normalized_points,
                                                     k=problem_info['n_vehicles'],
                                                     c=problem_info['n_vehicles'],
+                                                    p=problem_info['n_vehicles'],
                                                     data_df=normalized_df,
                                                     **kwargs)
     print(f"Clustering time: {time.time() - ti}")
@@ -136,6 +138,7 @@ if __name__ == "__main__":
     
     fc_method = fcm.my_fuzzy_c_means
     km_method = km.centroids_search2
+    p_median_method = pm.p_median_clustering
     
     cost = run_clustering(instance_name, km_method, verbose,
                           **algorithms_params)
