@@ -1,8 +1,10 @@
+import os
 import pandas as pd
 
 ################################################################################
 # The instance data is stored in the data folder
 ################################################################################
+
 
 def read_instance(instance_name: str):
     '''
@@ -15,11 +17,13 @@ def read_instance(instance_name: str):
     Returns:
     (DataFrame): Dataframe with the instance data
     '''
-    
-    return pd.read_csv(f"data\\{instance_name}.vrp", 
-                       header=None, sep='\s+', 
+    # Build file path
+    file_path = os.path.join("data", f"{instance_name}.vrp")
+
+    return pd.read_csv(file_path, header=None, sep='\s+',
                        names=[f'{i}' for i in range(8)]).iloc[:,0:5]
-    
+
+
 def obtain_instance_data(instance_name: str):
     ''' 
     Extracts the points, demands, number of vehicles, number of nodes, 

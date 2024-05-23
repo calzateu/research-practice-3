@@ -122,18 +122,19 @@ def run_clustering(instance_name: str, clustering_method: callable,
     print("Total cost: ", total_cost)
     
     return total_cost
-    
+
+
 if __name__ == "__main__":
     verbose = True
     instance_name = 'p01'
     
     algorithms_params = {
         "metric": md.euclidean_distance, 
-        "m":2, 
-        "epsilon":0.01,
-        "max_ite":100,
-        "max_iterations":100,
-        "repetition_number":100
+        "m": 2,
+        "epsilon": 0.01,
+        "max_ite": 100,
+        "max_iterations": 100,
+        "repetition_number": 100
     }
     
     fc_method = fcm.my_fuzzy_c_means
